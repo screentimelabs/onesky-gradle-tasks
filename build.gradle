@@ -1,0 +1,37 @@
+plugins {
+    id 'groovy'
+    id 'maven'
+    id "com.jfrog.bintray" version "1.3.1"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name "bintray"
+        url  "https://dl.bintray.com/screentimelabs/maven"
+    }
+}
+
+bintray {
+    user = 'svangasse'
+    key = binTrayAPIKey
+    configurations = ['archives']
+    publish = true
+    pkg {
+        userOrg = 'screentimelabs'
+        repo = 'maven'
+        name = 'onesky-gradle-tasks'
+    }
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    
+    compile 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+    compile 'org.apache.httpcomponents:httpmime:4.5'
+    compile 'org.apache.commons:commons-io:1.3.2'}
+
+group = 'com.screentime'
+version = '0.1.2'
+
