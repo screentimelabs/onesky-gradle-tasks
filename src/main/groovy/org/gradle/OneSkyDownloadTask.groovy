@@ -41,8 +41,10 @@ class OneSkyDownloadTask extends OneSkyTask {
                             def destFile = new File(project.rootDir, destPath(translationFile, languageCode))
                             println "Saving '${locale}' translation to ${destFile}"
                             def fileWriter = new FileWriter(destFile)
-                            IOUtils.copy(reader, fileWriter)
-                            reader.close()
+                            if (reader != null) {
+                                IOUtils.copy(reader, fileWriter)
+                                reader.close()
+                            }
                             fileWriter.close()
                         }
                         response.failure = printResponse
