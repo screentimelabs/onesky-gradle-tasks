@@ -6,6 +6,8 @@ import org.apache.http.entity.mime.MultipartEntity
 import org.apache.http.entity.mime.content.FileBody
 import org.gradle.api.tasks.TaskAction
 
+import java.util.concurrent.Executors
+
 import static groovyx.net.http.Method.POST
 
 class OneSkyUploadTask extends OneSkyTask {
@@ -13,6 +15,7 @@ class OneSkyUploadTask extends OneSkyTask {
     def projectId
     def format
     def files
+    def threads = 10
 
     @TaskAction
     def put() {
@@ -21,33 +24,39 @@ class OneSkyUploadTask extends OneSkyTask {
 
         getAuthParams { timestamp, devHash ->
 
+            def tasks = []
+
             files.each { filename ->
-                File file = new File("${project.rootDir}${filename}")
-                println "Uploading ${file}"
+                tasks.add {
+                    File file = new File("${project.rootDir}${filename}")
+                    println "Uploading ${file}"
 
-                http.request(POST) { req ->
+                    http.request(POST) { req ->
 
-                    uri.query = [
-                            api_key  : project.oneSkyPublicKey,
-                            timestamp: timestamp,
-                            dev_hash : devHash,
-                            file_format: format,
-                            is_keeping_all_strings: 'false'
-                    ]
+                        uri.query = [
+                                api_key               : project.oneSkyPublicKey,
+                                timestamp             : timestamp,
+                                dev_hash              : devHash,
+                                file_format           : format,
+                                is_keeping_all_strings: 'false'
+                        ]
 
-                    requestContentType: "multipart/form-data"
+                        requestContentType: "multipart/form-data"
 
-                    MultipartEntity multiPartContent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE)
+                        MultipartEntity multiPartContent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE)
 
-                    FileBody bin = new FileBody(file);
-                    multiPartContent.addPart("file", bin );
+                        FileBody bin = new FileBody(file);
+                        multiPartContent.addPart("file", bin);
 
-                    req.setEntity(multiPartContent)
+                        req.setEntity(multiPartContent)
 
-                    response.success = printResponse
-                    response.failure = printResponse
+                        response.success = printResponse
+                        response.failure = printResponse
+                    }
                 }
             }
+
+            Executors.newFixedThreadPool(threads).invokeAll(tasks)
         }
     }
 }
